@@ -1,0 +1,22 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — PokerTrack</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <nav>
+        <div class="container">
+            <a class="brand" href="/Dashboard">Poker<span>Track</span></a>
+            <a class="btn" href="/LogSession">+ Log Session</a>
+        </div>
+    </nav>
+
+    <div class="container page-content">
+        @RenderBody()
+    </div>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

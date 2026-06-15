@@ -1,0 +1,115 @@
+@page
+@model PokerTrack.Web.Pages.DashboardModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<h1>Dashboard</h1>
+<!-- Analytics are null until the Worker processes the first session event.
+     After that this section always has data since the Worker keeps it updated. -->
+
+@if (Model.Analytics is null)
+{
+    <p>No sessions logged yet. <a asp-page="/LogSession">Log your first session</a> to get started.</p>
+}
+else
+{
+    var a = Model.Analytics;
+    <div class="stats-grid">
+        <div class="stat-card">
+            <span class="stat-label">Total profit</span>
+            <!-- CSS class switches color green/red based on profit sign -->
+            <span class="stat-value @(a.TotalProfit >= 0 ? "positive" : "negative")">
+                @a.TotalProfit.ToString("C")
+            </span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Win rate</span>
+            <span class="stat-value">@((a.WinRate * 100).ToString("F1"))%</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Avg hourly</span>
+            <span class="stat-value @(a.AvgHourlyRate >= 0 ? "positive" : "negative")">
+                @a.AvgHourlyRate.ToString("C")/hr
+            </span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Sessions</span>
+            <span class="stat-value">@a.TotalSessions</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Current streak</span>
+            <span class="stat-value @(a.CurrentStreak >= 0 ? "positive" : "negative")">
+                @(a.CurrentStreak >= 0 ? $"+{a.CurrentStreak}" : a.CurrentStreak.ToString())
+            </span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Best win</span>
+            <span class="stat-value positive">@a.BiggestWin.ToString("C")</span>
+        </div>
+    </div>
+}
+
+<h2>Recent sessions</h2>
+<a asp-page="/LogSession" class="btn">+ Log session</a>
+
+@if (!Model.RecentSessions.Any())
+{
+    <p>Nothing here yet.</p>
+}
+else
+{
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Venue</th>
+                <th>Game</th>
+                <th>Stakes</th>
+                <th>Buy-in</th>
+                <th>Cash-out</th>
+                <th>Profit</th>
+                <th>Hours</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var s in Model.RecentSessions)
+            {
+                <tr>
+                    <td>@s.SessionDate.ToString("MM/dd/yyyy")</td>
+                    <td>@s.VenueName</td>
+                    <td>@s.GameType</td>
+                    <td>@s.StakesDescription</td>
+                    <td>@s.BuyInAmount.ToString("C")</td>
+                    <td>@s.CashOutAmount.ToString("C")</td>
+                    <td class="@(s.Profit >= 0 ? "positive" : "negative")">@s.Profit.ToString("C")</td>
+                    <td>@((s.DurationMinutes / 60.0).ToString("F1"))</td>
+                    <td>
+                        <a href="/EditSession/@s.Id" class="btn-sm">Edit</a>
+                        <a href="/DeleteSession/@s.Id"
+                           class="btn-sm btn-danger"
+                           onclick="return confirm('Delete this session?')">Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <script>
+        // SignalR connection to the hub — withAutomaticReconnect handles brief disconnects
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/analyticsHub")
+            .withAutomaticReconnect()
+            .build();
+             // Worker notifies the hub after updating analytics —
+        // hub pushes this event to all connected browsers, triggering a reload
+        connection.on("AnalyticsUpdated", function () {
+            window.location.reload();
+        });
+
+        connection.start().catch(err => console.error(err));
+    </script>
+}

@@ -1,0 +1,16 @@
+{
+  "name": "pokertrack-sessions-connector",
+  "config": {
+    "connector.class": "io.debezium.connector.sqlserver.SqlServerConnector",
+    "database.hostname": "pokertrack-sql",
+    "database.port": "1433",
+    "database.user": "sa",
+    "database.password": "YourStrong!Password",
+    "database.names": "PokerTrack",
+    "table.include.list": "dbo.Sessions",
+    "topic.prefix": "poker",
+    "database.encrypt": "false",
+    "schema.history.internal.kafka.bootstrap.servers": "pokertrack-kafka:29092",
+    "schema.history.internal.kafka.topic": "poker.schema-history"
+  }
+}

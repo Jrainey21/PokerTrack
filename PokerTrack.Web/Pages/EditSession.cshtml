@@ -1,0 +1,88 @@
+﻿@page "{id:int}"
+@model PokerTrack.Web.Pages.EditSessionModel
+@{
+    ViewData["Title"] = "Edit Session";
+}
+
+<h1>Edit Session</h1>
+<!-- Hidden field carries the session ID through the POST so the repository
+     knows which row to update -->
+<form method="post">
+    <input type="hidden" asp-for="Input.Id" />
+    <div>
+        <label>Date</label>
+        <input asp-for="Input.SessionDate" type="date" />
+        <span asp-validation-for="Input.SessionDate"></span>
+    </div>
+    <div>
+        <label>Venue</label>
+        <input asp-for="Input.VenueName" />
+        <span asp-validation-for="Input.VenueName"></span>
+    </div>
+    <div>
+        <label>Game Type</label>
+        <!-- When user selects game type: bj or poker, the StakesDescription dropdown is repopulated. -->
+        <select asp-for="Input.GameType" id="gameType" onchange="updateStakes()">
+            <option value="Cash - Poker">Cash - Poker</option>
+            <option value="Tournament - Poker">Tournament - Poker</option>
+            <option value="Blackjack">Blackjack</option>
+        </select>
+    </div>
+    <div>
+        <label>Stakes</label>
+        <!-- Dynamically rendered based on game type....updateStakes() -->
+        <select asp-for="Input.StakesDescription" id="stakes">
+        </select>
+    </div>
+
+    <div>
+        <label>Buy-in ($)</label>
+        <input asp-for="Input.BuyInAmount" type="number" step="0.01" />
+        <span asp-validation-for="Input.BuyInAmount"></span>
+    </div>
+    <div>
+        <label>Cash-out ($)</label>
+        <input asp-for="Input.CashOutAmount" type="number" step="0.01" />
+        <span asp-validation-for="Input.CashOutAmount"></span>
+    </div>
+    <div>
+        <label>Duration (minutes)</label>
+        <input asp-for="Input.DurationMinutes" type="number" />
+        <span asp-validation-for="Input.DurationMinutes"></span>
+    </div>
+    <div>
+        <label>Notes</label>
+        <textarea asp-for="Input.Notes"></textarea>
+    </div>
+    <div asp-validation-summary="All" style="color:red"></div>
+    <button type="submit">Save Changes</button>
+    <a asp-page="/Dashboard" class="btn-sm">Cancel</a>
+</form>
+@section Scripts{
+    <script>
+        const stakeOptions = {
+            "Cash - Poker":["$1/$2 NL", "$1/$3 NL","$2/$4 NL", "$2/$5 NL"],
+            "Tournament - Poker": ["Tournament Buy-In"],
+            "Blackjack": ["$15 min","$25 min","$50 min","$100 min"]
+        };
+        const currentStakes = "@Model.Input.StakesDescription";
+
+        function updateStakes(){
+            const gameType = document.getElementById("gameType").value;
+            const stakesSelect = document.getElementById("stakes");
+            const options = stakeOptions[gameType]||[];
+
+            stakesSelect.innerHTML = "";
+                options.forEach(opt => {
+            const el = document.createElement("option");
+            el.value = opt;
+            el.text = opt;
+            if (opt === currentStakes) el.selected = true;
+            stakesSelect.appendChild(el);
+        });
+        }
+             document.addEventListener("DOMContentLoaded", function() {
+        updateStakes();
+             });
+    </script>
+}

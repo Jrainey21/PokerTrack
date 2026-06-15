@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "New Profile",
+    "Projects": [
+      {
+        "Path": "PokerTrack.Web\\PokerTrack.Web.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "PokerTrack.Worker\\PokerTrack.Worker.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]
