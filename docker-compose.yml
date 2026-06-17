@@ -89,5 +89,18 @@ services:
           echo "Done."
         fi
 
+  seq:
+    image: datalust/seq:latest
+    container_name: pokertrack-seq
+    environment:
+      ACCEPT_EULA: "Y"
+      SEQ_FIRSTRUN_NOAUTHENTICATION: "true"
+    ports:
+      - "5341:5341"
+      - "8081:80"
+    volumes:
+      - seq-data:/data
+
 volumes:
   sql-data:
+  seq-data:
