@@ -55,4 +55,63 @@ public class SessionRepository(IDbConnection db)
         await db.QuerySingleOrDefaultAsync<SessionAnalytics>(
             "SELECT * FROM Analytics WHERE UserId = @UserId",
             new { UserId = userId });
+
+    public async Task<(IEnumerable<PokerSession> Sessions, int TotalCount)> GetPagedAsync(
+    string userId,
+    int page,
+    int pageSize,
+    string sortColumn,
+    string sortDirection,
+    string? gameTypeFilter,
+    string? venueFilter)
+    {
+        var validColumns = new HashSet<string>
+    {
+        "SessionDate", "VenueName", "GameType", "BuyInAmount", "CashOutAmount"
+    };
+
+        // Whitelist sort column to prevent SQL injection via ORDER BY
+        if (!validColumns.Contains(sortColumn)) sortColumn = "SessionDate";
+        sortDirection = sortDirection == "asc" ? "ASC" : "DESC";
+
+        var where = new List<string> { "UserId = @UserId" };
+        if (!string.IsNullOrEmpty(gameTypeFilter)) where.Add("GameType = @GameTypeFilter");
+        if (!string.IsNullOrEmpty(venueFilter)) where.Add("VenueName LIKE @VenueFilter");
+
+        var whereClause = string.Join(" AND ", where);
+
+        // Profit is computed so sort by the expression instead of column name
+        var orderBy = sortColumn == "Profit"
+            ? $"(CashOutAmount - BuyInAmount) {sortDirection}"
+            : $"{sortColumn} {sortDirection}";
+
+        var sql = $"""
+        SELECT COUNT(*) FROM Sessions WHERE {whereClause};
+
+        SELECT * FROM Sessions
+        WHERE {whereClause}
+        ORDER BY {orderBy}
+        OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
+        """;
+
+        using var multi = await db.QueryMultipleAsync(sql, new
+        {
+            UserId = userId,
+            GameTypeFilter = gameTypeFilter,
+            VenueFilter = $"%{venueFilter}%",
+            Offset = (page - 1) * pageSize,
+            PageSize = pageSize
+        });
+
+        var totalCount = await multi.ReadSingleAsync<int>();
+        var sessions = await multi.ReadAsync<PokerSession>();
+
+        return (sessions, totalCount);
+    }
+
+    // Get distinct venues for the filter dropdown
+    public async Task<IEnumerable<string>> GetVenuesAsync(string userId) =>
+        await db.QueryAsync<string>(
+            "SELECT DISTINCT VenueName FROM Sessions WHERE UserId = @UserId ORDER BY VenueName",
+            new { UserId = userId });
 }

@@ -1,0 +1,98 @@
+﻿@page
+@model PokerTrack.Web.Pages.SessionsModel
+@{
+    ViewData["Title"] = "Sessions";
+}
+
+<h1>Sessions</h1>
+
+<!-- Filters -->
+<form method="get" class="filter-bar">
+    <input type="hidden" name="sortColumn" value="@Model.SortColumn" />
+    <input type="hidden" name="sortDirection" value="@Model.SortDirection" />
+    <input type="hidden" name="currentPage" value="1" />
+
+    <select name="gameTypeFilter" onchange="this.form.submit()">
+        <option value="">All game types</option>
+        <option value="Cash - Poker" selected="@(Model.GameTypeFilter == "Cash - Poker")">Cash - Poker</option>
+        <option value="Tournament - Poker" selected="@(Model.GameTypeFilter == "Tournament - Poker")">Tournament - Poker</option>
+        <option value="Blackjack" selected="@(Model.GameTypeFilter == "Blackjack")">Blackjack</option>
+    </select>
+
+    <select name="venueFilter" onchange="this.form.submit()">
+        <option value="">All venues</option>
+        @foreach (var venue in Model.Venues)
+        {
+            <option value="@venue" selected="@(Model.VenueFilter == venue)">@venue</option>
+        }
+    </select>
+
+    <a href="/Sessions" class="btn-sm">Clear filters</a>
+</form>
+
+<p class="session-count">@Model.TotalCount session@(Model.TotalCount != 1 ? "s" : "")</p>
+
+@if (!Model.Sessions.Any())
+{
+    <p>No sessions match the current filters.</p>
+}
+else
+{
+    <table>
+        <thead>
+            <tr>
+                <th><a href="?sortColumn=SessionDate&sortDirection=@(Model.SortColumn == "SessionDate" && Model.SortDirection == "asc" ? "desc" : "asc")&currentPage=1&gameTypeFilter=@Model.GameTypeFilter&venueFilter=@Model.VenueFilter">Date @(Model.SortColumn == "SessionDate" ? (Model.SortDirection == "asc" ? "↑" : "↓") : "")</a></th>
+                <th><a href="?sortColumn=VenueName&sortDirection=@(Model.SortColumn == "VenueName" && Model.SortDirection == "asc" ? "desc" : "asc")&currentPage=1&gameTypeFilter=@Model.GameTypeFilter&venueFilter=@Model.VenueFilter">Venue @(Model.SortColumn == "VenueName" ? (Model.SortDirection == "asc" ? "↑" : "↓") : "")</a></th>
+                <th><a href="?sortColumn=GameType&sortDirection=@(Model.SortColumn == "GameType" && Model.SortDirection == "asc" ? "desc" : "asc")&currentPage=1&gameTypeFilter=@Model.GameTypeFilter&venueFilter=@Model.VenueFilter">Game @(Model.SortColumn == "GameType" ? (Model.SortDirection == "asc" ? "↑" : "↓") : "")</a></th>
+                <th>Stakes</th>
+                <th><a href="?sortColumn=BuyInAmount&sortDirection=@(Model.SortColumn == "BuyInAmount" && Model.SortDirection == "asc" ? "desc" : "asc")&currentPage=1&gameTypeFilter=@Model.GameTypeFilter&venueFilter=@Model.VenueFilter">Buy-in @(Model.SortColumn == "BuyInAmount" ? (Model.SortDirection == "asc" ? "↑" : "↓") : "")</a></th>
+                <th><a href="?sortColumn=CashOutAmount&sortDirection=@(Model.SortColumn == "CashOutAmount" && Model.SortDirection == "asc" ? "desc" : "asc")&currentPage=1&gameTypeFilter=@Model.GameTypeFilter&venueFilter=@Model.VenueFilter">Cash-out @(Model.SortColumn == "CashOutAmount" ? (Model.SortDirection == "asc" ? "↑" : "↓") : "")</a></th>
+                <th><a href="?sortColumn=Profit&sortDirection=@(Model.SortColumn == "Profit" && Model.SortDirection == "asc" ? "desc" : "asc")&currentPage=1&gameTypeFilter=@Model.GameTypeFilter&venueFilter=@Model.VenueFilter">Profit @(Model.SortColumn == "Profit" ? (Model.SortDirection == "asc" ? "↑" : "↓") : "")</a></th>
+                <th>Hours</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var s in Model.Sessions)
+            {
+                <tr>
+                    <td>@s.SessionDate.ToString("MM/dd/yyyy")</td>
+                    <td>@s.VenueName</td>
+                    <td>@s.GameType</td>
+                    <td>@s.StakesDescription</td>
+                    <td>@s.BuyInAmount.ToString("C")</td>
+                    <td>@s.CashOutAmount.ToString("C")</td>
+                    <td class="@(s.Profit >= 0 ? "positive" : "negative")">@s.Profit.ToString("C")</td>
+                    <td>@((s.DurationMinutes / 60.0).ToString("F1"))</td>
+                    <td>
+                        <a href="/EditSession/@s.Id" class="btn-sm">Edit</a>
+                        <a href="/DeleteSession/@s.Id"
+                           class="btn-sm btn-danger"
+                           onclick="return confirm('Delete this session?')">Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    @if (Model.TotalPages > 1)
+    {
+        <div class="pagination">
+            @if (Model.CurrentPage > 1)
+            {
+                <a href="?currentPage=@(Model.CurrentPage - 1)&sortColumn=@Model.SortColumn&sortDirection=@Model.SortDirection&gameTypeFilter=@Model.GameTypeFilter&venueFilter=@Model.VenueFilter" class="btn-sm">← Prev</a>
+            }
+
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <a href="?currentPage=@i&sortColumn=@Model.SortColumn&sortDirection=@Model.SortDirection&gameTypeFilter=@Model.GameTypeFilter&venueFilter=@Model.VenueFilter"
+                   class="btn-sm @(i == Model.CurrentPage ? "active" : "")">@i</a>
+            }
+
+            @if (Model.CurrentPage < Model.TotalPages)
+            {
+                <a href="?currentPage=@(Model.CurrentPage + 1)&sortColumn=@Model.SortColumn&sortDirection=@Model.SortDirection&gameTypeFilter=@Model.GameTypeFilter&venueFilter=@Model.VenueFilter" class="btn-sm">Next →</a>
+            }
+        </div>
+    }
+}
