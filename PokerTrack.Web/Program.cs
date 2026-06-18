@@ -46,7 +46,7 @@ builder.Services.AddAuthorization();
 // Razor Pages handles page routing, SignalR handles real-time dashboard updates
 builder.Services.AddRazorPages();
 builder.Services.AddSignalR();
-
+builder.Services.AddApplicationInsightsTelemetry();
 // Transient IDbConnection so each request gets its own SqlConnection via Dapper
 builder.Services.AddTransient<IDbConnection>(_ =>
     new SqlConnection(builder.Configuration.GetConnectionString("Sql")));
