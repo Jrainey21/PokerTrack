@@ -1,12 +1,14 @@
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.Identity.Web;
+using Microsoft.Identity.Web.UI;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Data.SqlClient;
 using PokerTrack.Web;
-using System.Data;
 using Serilog;
 using Serilog.Formatting.Compact;
+using System.Data;
 
-// Bootstrap logger captures startup errors before DI container is built
 Log.Logger = new LoggerConfiguration()
     .Enrich.FromLogContext()
     .Enrich.WithMachineName()
@@ -33,27 +35,24 @@ builder.Host.UseSerilog((context, services, configuration) =>
     {
         configuration.WriteTo.Console(new CompactJsonFormatter());
     }
-
     // Always send to Seq regardless of environment
     configuration.WriteTo.Seq("http://localhost:5341");
 });
 
-// Cookie auth for local dev — swap for Entra ID SSO when tenant is available
-builder.Services.AddAuthentication("DevAuth")
-    .AddCookie("DevAuth");
+// Microsoft Entra ID SSO
+builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
+    .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"));
 builder.Services.AddAuthorization();
 
 // Razor Pages handles page routing, SignalR handles real-time dashboard updates
-builder.Services.AddRazorPages();
+builder.Services.AddRazorPages().AddMicrosoftIdentityUI(); 
 builder.Services.AddSignalR();
 builder.Services.AddApplicationInsightsTelemetry();
+
 // Transient IDbConnection so each request gets its own SqlConnection via Dapper
 builder.Services.AddTransient<IDbConnection>(_ =>
     new SqlConnection(builder.Configuration.GetConnectionString("Sql")));
 builder.Services.AddTransient<SessionRepository>();
-
-// Redirect unauthenticated users to dev login instead of default /Account/Login
-builder.Services.ConfigureApplicationCookie(o => o.LoginPath = "/DevLogin");
 
 var app = builder.Build();
 
@@ -66,7 +65,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 // Root URL redirects to DevLogin which auto-signs in and lands on Dashboard
-app.MapGet("/", () => Results.Redirect("/DevLogin"));
+app.MapGet("/", () => Results.Redirect("/Dashboard"));
 app.MapRazorPages();
 
 // Worker calls this after updating analytics — triggers SignalR push to all browsers
