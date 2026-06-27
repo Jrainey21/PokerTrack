@@ -288,3 +288,12 @@ thead a {
     background: #7c3aed;
     color: #fff;
 }
+
+.chart-container {
+    background: #1a1d27;
+    border: 1px solid #2d2f3e;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2.5rem;
+    height: 300px;
+}

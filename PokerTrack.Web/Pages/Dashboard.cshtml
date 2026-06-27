@@ -49,6 +49,11 @@ else
         </div>
     </div>
 }
+    <h2>Profit over time</h2>
+    <div class="chart-container">
+        <canvas id="profitChart"></canvas>
+    </div>
+
 
 <h2>Recent sessions</h2>
 <a asp-page="/LogSession" class="btn">+ Log session</a>
@@ -97,14 +102,45 @@ else
     </table>
 }
 @section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+
+    <script>
+        const ctx = document.getElementById('profitChart');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: @Html.Raw(Model.ChartLabelsJson),
+                datasets: [{
+                    label: 'Cumulative profit',
+                    data: @Html.Raw(Model.ChartDataJson),
+                    borderColor: '#7c3aed',
+                    backgroundColor: 'rgba(124, 58, 237, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { labels: { color: '#e2e8f0' } }
+                },
+                scales: {
+                    x: { ticks: { color: '#64748b' }, grid: { color: '#2d2f3e' } },
+                    y: { ticks: { color: '#64748b' }, grid: { color: '#2d2f3e' } }
+                }
+            }
+        });
+    </script>
+
     <script>
         // SignalR connection to the hub — withAutomaticReconnect handles brief disconnects
         const connection = new signalR.HubConnectionBuilder()
             .withUrl("/analyticsHub")
             .withAutomaticReconnect()
             .build();
-             // Worker notifies the hub after updating analytics —
+
+        // Worker notifies the hub after updating analytics —
         // hub pushes this event to all connected browsers, triggering a reload
         connection.on("AnalyticsUpdated", function () {
             window.location.reload();
