@@ -4,12 +4,23 @@ A personal poker and blackjack session tracker I built to combine two things I c
 
 I play cash games and tournaments at local casinos and wanted a way to track sessions, analyze trends, and see where I'm winning or losing over time. I used this as an opportunity to build something I'd actually use while working with technologies I wanted to get hands-on experience with.
 
+## Live Demo
+
+🔗 [pokertrack-app-eqe8g9chc4a6dzh7.centralus-01.azurewebsites.net](https://pokertrack-app-eqe8g9chc4a6dzh7.centralus-01.azurewebsites.net)
+
+> Hosted on Azure's free tier, so it may take a few seconds to wake up if it's been idle — if the first load seems slow or shows an error, just refresh.
+
+The web app and database are deployed to Azure (App Service + Azure SQL) with a GitHub Actions CI/CD pipeline that automatically deploys on every push to `main`. The Kafka/Debezium/Worker pipeline runs locally via Docker Compose — see "Running locally" below to see the full event-driven architecture in action.
+
 ## What it does
 
 - Log poker and blackjack sessions with venue, game type, stakes, buy-in, cash-out, and duration
 - Edit and delete sessions
+- Paginated sessions list
 - Real-time dashboard showing total profit, win rate, hourly rate, current streak, and best win
+- Profit-over-time chart
 - Dashboard updates automatically the moment a session is saved — no manual refresh needed
+- Microsoft Entra ID SSO
 
 ## Architecture
 
@@ -38,6 +49,8 @@ The pipeline: Log session → SQL Server → Debezium CDC → Kafka → Worker S
 - SignalR
 - Docker Compose
 - Microsoft Entra ID SSO
+- Serilog + correlation IDs, Seq, Azure Application Insights
+- GitHub Actions CI/CD, deployed to Azure App Service + Azure SQL
 
 ## Why these technologies
 
@@ -111,10 +124,16 @@ is redelivered and processed twice, the result is identical because it's always
 derived from the source of truth in the Sessions table. This avoids the need for 
 offset tracking or idempotency key tables.
 
+**Scoped deployment** — the web app and SQL Server are deployed to Azure, but the
+Kafka/Debezium/Worker pipeline currently runs locally only. Hosting a continuously
+running Kafka broker and connector isn't worth the ongoing cost for a portfolio
+project, so the event-driven pipeline is fully demonstrated locally via Docker
+Compose rather than running live in production.
+
 ## Roadmap
 
-- [ ] Microsoft Entra ID SSO
-- [ ] Full sessions list with pagination
-- [ ] Profit over time chart
+- [ ] Dead letter topic for failed message processing
+- [ ] Polly retry policies around Kafka consumer and SQL calls
+- [ ] Health checks for Worker and dependencies
 - [ ] DbUp for automatic schema migrations on startup
 - [ ] Export sessions to CSV
